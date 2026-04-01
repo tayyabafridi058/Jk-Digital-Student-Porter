@@ -1,0 +1,67 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: enrollments
+    // Document ID: auto-generated
+    // Fields:
+    //   - fullName: string (required)
+    //   - fatherName: string (required)
+    //   - email: string (required, email format)
+    //   - phone: string (required, 10-12 digits)
+    //   - cnic: string (required, 00000-0000000-0 format)
+    //   - city: string (required)
+    //   - gender: string (required, Male/Female/Other)
+    //   - education: string (required)
+    //   - course: string (required)
+    //   - preference: string (required, Online/Onsite)
+    //   - address: string (required)
+    //   - createdAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // Helper Functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "tayyabafridi058@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidEnrollment(data) {
+      return data.keys().hasAll(['fullName', 'fatherName', 'email', 'phone', 'cnic', 'city', 'gender', 'education', 'course', 'preference', 'address', 'createdAt']) &&
+             data.fullName is string && data.fullName.size() >= 3 && data.fullName.size() <= 100 &&
+             data.fatherName is string && data.fatherName.size() >= 3 && data.fatherName.size() <= 100 &&
+             data.email is string && data.email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$") &&
+             data.phone is string && data.phone.matches("^\\d{10,12}$") &&
+             data.cnic is string && data.cnic.matches("^\\d{5}-\\d{7}-\\d{1}$") &&
+             data.city is string && data.city.size() >= 2 &&
+             data.gender in ['Male', 'Female', 'Other'] &&
+             data.education is string && data.education.size() >= 2 &&
+             data.course is string && data.course.size() >= 2 &&
+             data.preference in ['Online', 'Onsite'] &&
+             data.address is string && data.address.size() >= 10 && data.address.size() <= 500 &&
+             data.createdAt is timestamp;
+    }
+
+    match /enrollments/{enrollmentId} {
+      // Allow anyone to submit an enrollment form, but validate the data
+      allow create: if isValidEnrollment(request.resource.data);
+      
+      // Only admins can read, update, or delete enrollments
+      allow read, update, delete: if isAdmin();
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow create, update: if isAdmin();
+    }
+  }
+}

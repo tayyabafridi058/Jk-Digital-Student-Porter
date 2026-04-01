@@ -1,0 +1,30 @@
+{
+  "entities": {
+    "Enrollment": {
+      "title": "Enrollment",
+      "description": "A student enrollment application for JK Digital.",
+      "type": "object",
+      "properties": {
+        "fullName": { "type": "string", "description": "Full name of the student" },
+        "fatherName": { "type": "string", "description": "Father's name" },
+        "email": { "type": "string", "format": "email", "description": "Email address" },
+        "phone": { "type": "string", "description": "Phone number" },
+        "cnic": { "type": "string", "description": "CNIC number" },
+        "city": { "type": "string", "description": "City of residence" },
+        "gender": { "type": "string", "enum": ["Male", "Female", "Other"], "description": "Gender" },
+        "education": { "type": "string", "description": "Last qualification" },
+        "course": { "type": "string", "description": "Selected course" },
+        "preference": { "type": "string", "enum": ["Online", "Onsite"], "description": "Class preference" },
+        "address": { "type": "string", "description": "Full residential address" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Timestamp of submission" }
+      },
+      "required": ["fullName", "fatherName", "email", "phone", "cnic", "city", "gender", "education", "course", "preference", "address", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/enrollments/{enrollmentId}": {
+      "schema": "Enrollment",
+      "description": "Collection of student enrollment applications."
+    }
+  }
+}
